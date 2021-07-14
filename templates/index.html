@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="description" content="Show Colonist and Catan statistics"/>
+  <meta name="author" content="Kirusanth Poopalasingam" />
+  <meta name="robots" content="follow"/>
+
+  <title>Colonist vs Catan Statistics</title>
+
+  <script src="https://cdn.plot.ly/plotly-2.2.1.min.js"></script>
+
+  <style>
+      body {
+          font-family: 'Consolas', 'Deja Vu Sans Mono', 'Bitstream Vera Sans Mono', monospace;
+      }
+
+      h1 {
+          color: maroon;
+          margin-left: 40px;
+      }
+
+      .kiru{
+          position: fixed;
+          right: 0;
+          bottom: 0;
+          padding: 1px 2px;
+          display: flex;
+          align-items: center;
+          background-color: #2196f36b;
+      }
+  </style>
+</head>
+<body>
+
+<div id="chart"></div>
+
+<div id="fineChart"></div>
+
+<a target="_blank"
+   class="kiru"
+   href="https://twitter.com/kiru_io"
+   style="position: fixed; right: 0; bottom: 0; text-decoration: none;">
+  <img style="height: 24px; border-radius: 9999px; margin-right: 1px"
+       src="https://pbs.twimg.com/profile_images/1063449222790504450/n2vT6rVb_bigger.jpg">
+  <p  style="margin: 4px">by Kiru.io</p>
+</a>
+
+<script>
+  fetch('/api/user/')
+    .then(o => o.json())
+    .then(allData => {
+      let catan = allData.catan
+      let colonist = allData.colonist
+      let data = [
+        {
+          name: 'Catan',
+          x: catan.map(each => each[0]),
+          y: catan.map(each => each[1]),
+          type: 'scatter'
+        },
+        {
+          name: 'Colonist (socket-count)',
+          x: colonist.map(each => each[0]),
+          y: colonist.map(each => each[1]),
+          type: 'scatter'
+        }
+      ];
+
+      Plotly.newPlot('chart', data, {
+        legend: {"orientation": "h"},
+        showlegend: true,
+        'title': 'Colonist.io vs Catan Users'
+      });
+
+      let dataColonist = [
+        {
+          name: '# in rooms',
+          x: colonist.map(each => each[0]),
+          y: colonist.map(each => each[2]),
+          type: 'scatter'
+        },
+        {
+          name: '# in lobby',
+          x: colonist.map(each => each[0]),
+          y: colonist.map(each => each[3]),
+          type: 'scatter'
+        },
+        {
+          name: '# in game',
+          x: colonist.map(each => each[0]),
+          y: colonist.map(each => each[4]),
+          type: 'scatter'
+        },
+        {
+          name: '# in spectating',
+          x: colonist.map(each => each[0]),
+          y: colonist.map(each => each[5]),
+          type: 'scatter'
+        },
+        {
+          name: 'Game count',
+          x: colonist.map(each => each[0]),
+          y: colonist.map(each => each[6]),
+          type: 'scatter'
+        },
+        {
+          name: 'Room count',
+          x: colonist.map(each => each[0]),
+          y: colonist.map(each => each[6]),
+          type: 'scatter'
+        }
+      ];
+
+      Plotly.newPlot('fineChart', dataColonist, {
+        legend: {"orientation": "h"},
+        showlegend: true,
+        'title': 'Colonist.io fine grained data'
+      });
+    })
+  ;
+</script>
+</body>
+</html>
