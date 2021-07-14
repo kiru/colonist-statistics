@@ -12,3 +12,10 @@ A simple HTML file plots teh collected data.
 The project is hosted on [colonist.bykiru.rocks](https://colonist.bykiru.rocks/)
 
 
+#### TODO
+
+- Reconnect WS when WebSocketConnectionClosedException is thrown
+
+- clean data (some datapoints from catan server were 0, should not happen)
+
+
