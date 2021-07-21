@@ -3,6 +3,8 @@
 # It should show online amount in a nice dynamic chart.
 
 
+import traceback
+import time
 import msgpack
 import requests
 import websocket
@@ -61,30 +63,30 @@ def track_colonist():
     first_fetch = True
 
     while True:
-        # We need to first get the jwt cookie from the website
-        response = requests.get("https://colonist.io")
-        cookies = response.cookies.get_dict()
-        header = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:88.0) Gecko/20100101 Firefox/88.0",
-                  "Sec-WebSocket-Extensions": "permessage-deflate",
-                  "Sec-WebSocket-Version": "13"}
-
-        # websocket.enableTrace(True)
-        print("Connect to WebSocket")
-        ws = websocket.WebSocket()
-
-        ws.connect("ws://socket.colonist.io", cookie=f"jwt={cookies['jwt']}",
-                   origin="https://colonist.io", host="socket.colonist.io", header=header)
-
-        # Send the first message so that they can start sending us data back
-        ws.send_binary(msgpack.packb({"id": "1", "data": True}))
-
-        print("Listening to messages")
         try:
+            # We need to first get the jwt cookie from the website
+            response = requests.get("https://colonist.io")
+            cookies = response.cookies.get_dict()
+            header = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:88.0) Gecko/20100101 Firefox/88.0",
+                      "Sec-WebSocket-Extensions": "permessage-deflate",
+                      "Sec-WebSocket-Version": "13"}
+
+            # websocket.enableTrace(True)
+            print("Connect to WebSocket")
+            ws = websocket.WebSocket()
+
+            ws.connect("ws://socket.colonist.io", cookie=f"jwt={cookies['jwt']}",
+                       origin="https://colonist.io", host="socket.colonist.io", header=header)
+
+            # Send the first message so that they can start sending us data back
+            ws.send_binary(msgpack.packb({"id": "1", "data": True}))
+
+            print("Listening to messages")
             while True:
                 data = msgpack.unpackb(ws.recv())
 
                 # this is the nr-user-message
-                if data[b'id'] == b"49":
+                if data['id'] == "49":
 
                     current_date_time = datetime.now()
                     # Ping every 5 min
@@ -94,17 +96,17 @@ def track_colonist():
 
                     # Store only the messages every 5min
                     if (current_date_time - last_insert).total_seconds() > 5 * 60 or first_fetch:
-                        actual_data = data[b'data']
+                        actual_data = data['data']
                         last_insert = current_date_time
                         sql_worker.execute("INSERT into colonist_count values (?, ?, ?, ?, ?, ?, ?, ?)", (
                             current_date_time,
-                            actual_data[b'userCountWithSocket'],
-                            actual_data[b'userCountInRooms'],
-                            actual_data[b'userCountInLobby'],
-                            actual_data[b'userCountInGame'],
-                            actual_data[b'userCountInSpectating'],
-                            actual_data[b'roomCount'],
-                            actual_data[b'gameCount']
+                            actual_data['userCountWithSocket'],
+                            actual_data['userCountInRooms'],
+                            actual_data['userCountInLobby'],
+                            actual_data['userCountInGame'],
+                            actual_data['userCountInSpectating'],
+                            actual_data['roomCount'],
+                            actual_data['gameCount']
                         ))
                         print(data)
 
@@ -112,6 +114,11 @@ def track_colonist():
         except Exception as err:
             exception_type = type(err).__name__
             print("Failed: ", exception_type)
+            print(traceback.format_exc())
+
+            # We should delay the re-connect, in order not to force the server to block our IP (or to bombard it with
+            # connection requests)
+            time.sleep(10)
 
 
 app = Flask(__name__)
